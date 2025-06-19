@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { auth, db, storage } from '@/lib/firebase'
+import { auth, db, storage, firebaseApp } from '@/lib/firebase'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import {
@@ -19,6 +19,7 @@ import {
   deleteDoc
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, getStorage } from 'firebase/storage'
+
 
 export default function Dashboard() {
   const [user, setUser] = useState(null)
@@ -306,26 +307,7 @@ const handleImageSelect = (taskId, files) => {
         </span>
       </div>
       
-      {/* Render attached images */}
-      {comment.images && comment.images.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {comment.images.map((imageUrl, imgIndex) => (
-            <div key={imgIndex} className="relative group">
-              <img
-                src={imageUrl}
-                alt={`Attachment ${imgIndex + 1}`}
-                className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => window.open(imageUrl, '_blank')}
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded transition-all duration-200 flex items-center justify-center">
-                <span className="text-white text-xs opacity-0 group-hover:opacity-100">
-                  Click to view
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      
     </div>
   )
 
