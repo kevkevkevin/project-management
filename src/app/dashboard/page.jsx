@@ -18,6 +18,7 @@ import {
   serverTimestamp,
   deleteDoc
 } from 'firebase/firestore'
+
 import { ref, uploadBytes, getDownloadURL, getStorage } from 'firebase/storage'
 
 
@@ -300,8 +301,7 @@ const handleImageSelect = (taskId, files) => {
   }
 
   
-  // Render comments with base64 images
-const renderComments = (taskId) => {
+  const renderComments = (taskId) => {
   const allComments = commentsMap[taskId] || []
   const latest = allComments.slice(-1)[0]
   const isExpanded = showAllComments[taskId]
@@ -317,38 +317,57 @@ const renderComments = (taskId) => {
           {comment.createdAt?.toDate?.()?.toLocaleString() || 'Just now'}
         </span>
       </div>
-      
-      {/* Display images */}
+
       {comment.images && comment.images.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {comment.images.map((image, imgIndex) => (
-            <div key={imgIndex} className="relative group">
-              <img
-                src={image.data}
-                alt={image.name}
-                className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => {
-                  // Open image in new window
-                  const newWindow = window.open()
-                  newWindow.document.write(`
-                    <html>
-                      <head><title>${image.name}</title></head>
-                      <body style="margin:0;padding:20px;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;">
-                        <img src="${image.data}" style="max-width:100%;max-height:100vh;object-fit:contain;" alt="${image.name}">
-                      </body>
-                    </html>
-                  `)
-                }}
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded transition-all duration-200 flex items-center justify-center">
-                <span className="text-white text-xs opacity-0 group-hover:opacity-100">
-                  Click to view
-                </span>
-              </div>
-            </div>
-          ))}
+  <div className="mt-2 flex flex-wrap gap-2">
+    {comment.images.map((image, imgIndex) => {
+      const imageSrc = image.data;
+
+      const handleOpenImage = () => {
+        try {
+          // Extract base64 string from data URL
+          const base64 = imageSrc.split(',')[1];
+          const byteCharacters = atob(base64);
+          const byteArrays = [];
+
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteArrays.push(byteCharacters.charCodeAt(i));
+          }
+
+          const byteArray = new Uint8Array(byteArrays);
+          const blob = new Blob([byteArray], { type: image.type || 'image/png' });
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+        } catch (err) {
+          console.error('Failed to open image:', err);
+        }
+      };
+
+      return (
+        <div key={imgIndex} className="relative group">
+          <img
+            src={imageSrc}
+            alt={image.name || 'Uploaded image'}
+            className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleOpenImage}
+            onError={(e) => {
+              e.target.style.border = '2px solid red';
+              e.target.alt = 'Image load error';
+              console.log('Image failed to load:', imageSrc);
+            }}
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded transition-all duration-200 flex items-center justify-center pointer-events-none">
+            <span className="text-white text-xs opacity-0 group-hover:opacity-100">
+              Click to view
+            </span>
+          </div>
         </div>
-      )}
+      );
+    })}
+  </div>
+)}
+
+
     </div>
   )
 

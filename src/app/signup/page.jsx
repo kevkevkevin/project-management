@@ -61,7 +61,7 @@ export default function SignUp() {
           value={role}
         >
           <option value="user">User</option>
-          {/* <option value="admin">Admin</option> */}
+          <option value="admin">Admin</option>
         </select>
         <button className="bg-[#E4002B] text-white px-4 py-2 rounded">Sign Up</button>
       </form>
