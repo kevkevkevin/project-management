@@ -10,7 +10,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center justify-center px-4 text-center"
     style={{ backgroundImage: "url('/bg.jpg')" }}>
       <h1 className="text-4xl md:text-5xl font-bold text-[#E4002B] mb-6">
-        Sliders  <br />Project Management Tool 🚀
+        Sliders Project Management Tool 🚀
       </h1>
       <p className="text-gray-600 text-lg mb-8 max-w-xl">
         Manage tasks, communicate with your team, and stay on top of your projects with a fun, friendly interface!
