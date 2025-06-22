@@ -36,6 +36,12 @@ export default function Login() {
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
         />
+        <p className="text-[12px]">If you dont have an account ready sign up here <span
+  onClick={() => router.push('/signup')}
+  className="text-[#E4002B] cursor-pointer hover:underline"
+>
+  Sign Up 🥳
+</span></p>
         <button className="bg-green-500 text-white px-4 py-2 rounded">Log In</button>
       </form>
     </div>
