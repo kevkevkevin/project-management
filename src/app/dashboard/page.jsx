@@ -143,23 +143,31 @@ const handleAddComment = async (taskId) => {
   try {
     setUploadingImages(prev => ({ ...prev, [taskId]: true }))
     
-    let imageUrls = []
+    let imageDataUrls = []
     
-    // Upload images if any are selected
+    // Convert images to base64 (works without CORS issues)
     if (selectedImages[taskId] && selectedImages[taskId].length > 0) {
-      const uploadPromises = Array.from(selectedImages[taskId]).map(async (file) => {
-        const imageRef = ref(storage, `comments/${taskId}/${Date.now()}_${file.name}`)
-        const snapshot = await uploadBytes(imageRef, file)
-        return await getDownloadURL(snapshot.ref)
+      const imagePromises = Array.from(selectedImages[taskId]).map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = (e) => resolve({
+            data: e.target.result,
+            name: file.name,
+            type: file.type,
+            size: file.size
+          })
+          reader.readAsDataURL(file)
+        })
       })
       
-      imageUrls = await Promise.all(uploadPromises)
+      imageDataUrls = await Promise.all(imagePromises)
     }
     
+    // Add comment to Firestore
     const commentRef = collection(db, 'tasks', taskId, 'comments')
     await addDoc(commentRef, {
       text: newComment[taskId] || '',
-      images: imageUrls,
+      images: imageDataUrls,
       createdAt: serverTimestamp(),
       author: user.email
     })
@@ -167,7 +175,8 @@ const handleAddComment = async (taskId) => {
     // Clear inputs
     setNewComment(prev => ({ ...prev, [taskId]: '' }))
     setSelectedImages(prev => ({ ...prev, [taskId]: null }))
-    
+
+    // Add notification
     const task = allTasks.find(t => t.id === taskId) || tasks.find(t => t.id === taskId)
     if (task) {
       await addDoc(collection(db, 'notifications'), {
@@ -188,20 +197,21 @@ const handleAddComment = async (taskId) => {
   }
 }
 
-// Handle image file selection
+// Handle image selection with size limits
 const handleImageSelect = (taskId, files) => {
   const validFiles = Array.from(files).filter(file => {
     const isImage = file.type.startsWith('image/')
-    const isValidSize = file.size <= 5 * 1024 * 1024 // 5MB limit
+    const isValidSize = file.size <= 2 * 1024 * 1024 // 2MB limit for base64
     return isImage && isValidSize
   })
   
   if (validFiles.length !== files.length) {
-    alert('Some files were not selected. Please ensure all files are images under 5MB.')
+    alert('Some files were not selected. Please ensure all files are images under 2MB.')
   }
   
   setSelectedImages(prev => ({ ...prev, [taskId]: validFiles }))
 }
+
 
   const deleteTask = async (taskId) => {
     if (confirm('Are you sure you want to delete this task?')) {
@@ -290,7 +300,8 @@ const handleImageSelect = (taskId, files) => {
   }
 
   
-  const renderComments = (taskId) => {
+  // Render comments with base64 images
+const renderComments = (taskId) => {
   const allComments = commentsMap[taskId] || []
   const latest = allComments.slice(-1)[0]
   const isExpanded = showAllComments[taskId]
@@ -307,7 +318,37 @@ const handleImageSelect = (taskId, files) => {
         </span>
       </div>
       
-      
+      {/* Display images */}
+      {comment.images && comment.images.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {comment.images.map((image, imgIndex) => (
+            <div key={imgIndex} className="relative group">
+              <img
+                src={image.data}
+                alt={image.name}
+                className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => {
+                  // Open image in new window
+                  const newWindow = window.open()
+                  newWindow.document.write(`
+                    <html>
+                      <head><title>${image.name}</title></head>
+                      <body style="margin:0;padding:20px;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;">
+                        <img src="${image.data}" style="max-width:100%;max-height:100vh;object-fit:contain;" alt="${image.name}">
+                      </body>
+                    </html>
+                  `)
+                }}
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded transition-all duration-200 flex items-center justify-center">
+                <span className="text-white text-xs opacity-0 group-hover:opacity-100">
+                  Click to view
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
