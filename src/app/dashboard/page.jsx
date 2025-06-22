@@ -567,7 +567,8 @@ const removeSelectedImage = (taskId, index) => {
   const completedTasks = allTasks.filter(task => task.status === 'done')
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd00] text-gray-800 max-w-[1400px] mx-auto ">
+    <div className="min-h-screen bg-[#fdfdfd00] text-gray-800 max-w-[1400px] mx-auto px-5 py-12 sm:px-20 sm:py-12">
+
       <NotificationBell />
       <h2 className="text-3xl font-bold text-[#E4002B] mb-4 mt-[50px]">Dashboard</h2>
       {user && <p className="mb-4 text-[#E4002B]">Welcome 🥳, {user.email} ({role})</p>}
