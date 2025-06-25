@@ -36,13 +36,10 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false)
   const [activeTab, setActiveTab] = useState('ongoing')
   const [expandedTasks, setExpandedTasks] = useState({})
-  // New state for time and date
   const [currentTime, setCurrentTime] = useState('')
   const [currentDate, setCurrentDate] = useState('')
-  // State for edit modal
   const [editTask, setEditTask] = useState(null)
   const [editForm, setEditForm] = useState({ title: '', description: '', deadline: '', driveLink: '' })
-  // New state for sidebar toggle
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const router = useRouter()
@@ -136,7 +133,6 @@ export default function Dashboard() {
     }
   }, [role, tasks])
 
-  // Update time and date every second
   useEffect(() => {
     const updateTimeDate = () => {
       const now = new Date()
@@ -145,7 +141,7 @@ export default function Dashboard() {
       setCurrentTime(time)
       setCurrentDate(date)
     }
-    updateTimeDate() // Initial call
+    updateTimeDate()
     const interval = setInterval(updateTimeDate, 1000)
     return () => clearInterval(interval)
   }, [])
@@ -232,7 +228,6 @@ export default function Dashboard() {
     await updateDoc(doc(db, 'notifications', notifId), { read: true })
   }
 
-  const unreadNotifications = notifications.filter(n => !n.read)
   const deleteNotification = async (notifId) => {
     await deleteDoc(doc(db, 'notifications', notifId))
   }
@@ -253,9 +248,9 @@ export default function Dashboard() {
         >
           🔔
         </button>
-        {unreadNotifications.length > 0 && (
+        {notifications.filter(n => !n.read).length > 0 && (
           <span className="absolute -top-1 -right-1 bg-[#E4002B] text-white text-xs px-2 py-1 rounded-full">
-            {unreadNotifications.length}
+            {notifications.filter(n => !n.read).length}
           </span>
         )}
         {showNotification && (
@@ -319,21 +314,26 @@ export default function Dashboard() {
         {comment.images && comment.images.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {comment.images.map((image, imgIndex) => {
-              const imageSrc = image.data
+              const imageSrc = image.data || (image.url ? image.url : '')
               const handleOpenImage = () => {
                 try {
-                  const base64 = imageSrc.split(',')[1]
-                  const byteCharacters = atob(base64)
-                  const byteArrays = []
-                  for (let i = 0; i < byteCharacters.length; i++) {
-                    byteArrays.push(byteCharacters.charCodeAt(i))
+                  if (imageSrc.startsWith('data:')) {
+                    const base64 = imageSrc.split(',')[1]
+                    const byteCharacters = atob(base64)
+                    const byteArrays = []
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                      byteArrays.push(byteCharacters.charCodeAt(i))
+                    }
+                    const byteArray = new Uint8Array(byteArrays)
+                    const blob = new Blob([byteArray], { type: image.type || 'image/png' })
+                    const url = URL.createObjectURL(blob)
+                    window.open(url, '_blank')
+                  } else if (image.url) {
+                    window.open(image.url, '_blank')
                   }
-                  const byteArray = new Uint8Array(byteArrays)
-                  const blob = new Blob([byteArray], { type: image.type || 'image/png' })
-                  const url = URL.createObjectURL(blob)
-                  window.open(url, '_blank')
                 } catch (err) {
                   console.error('Failed to open image:', err)
+                  alert('Error loading image. Please try again.')
                 }
               }
               return (
@@ -371,7 +371,7 @@ export default function Dashboard() {
         {allComments.length > 1 && (
           <button
             className="text-xs text-[#E4002B] hover:underline mt-2"
-            onClick={() => setShowAllComments(prev => ({ ...prev, [taskId]: !prev[taskId] }))}
+            onClick={() => toggleShowComments(taskId)}
           >
             {isExpanded ? 'Hide comments' : `Show all ${allComments.length} comments`}
           </button>
@@ -430,18 +430,18 @@ export default function Dashboard() {
 
   const renderTaskCard = (task) => {
     const truncateText = (text, maxWords = 20) => {
-      if (!text) return '';
-      const words = text.split(/\s+/);
-      if (words.length <= maxWords || expandedTasks[task.id]) return text;
-      return words.slice(0, maxWords).join(' ') + ' ...';
-    };
+      if (!text) return ''
+      const words = text.split(/\s+/)
+      if (words.length <= maxWords || expandedTasks[task.id]) return text
+      return words.slice(0, maxWords).join(' ') + ' ...'
+    }
 
     const toggleExpand = () => {
       setExpandedTasks(prev => ({
         ...prev,
         [task.id]: !prev[task.id]
-      }));
-    };
+      }))
+    }
 
     return (
       <div
@@ -455,7 +455,6 @@ export default function Dashboard() {
         <div className="space-y-2 text-sm text-[#1F2A44]">
           <p><span className="font-semibold">Assigned To:</span> {task.assignedTo}</p>
           <p><span className="font-semibold">Status:</span> {task.status}</p>
-          {/* Truncated Description with Label */}
           <div className="mt-2">
             <span className="font-semibold">Description:</span>{' '}
             <p
@@ -488,7 +487,6 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Progress Bar */}
         <div className="mt-4">
           <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
             <div
@@ -506,7 +504,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Admin: Status Controls */}
         {role === 'admin' && (
           <div className="mt-4">
             <label className="text-sm font-semibold text-[#1F2A44]">Change Status:</label>
@@ -522,7 +519,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Comments Section */}
         <div className="mt-4">
           <h4 className="font-semibold text-[#1F2A44] mb-2 text-sm">💬 Comments</h4>
           {renderComments(task.id)}
@@ -530,7 +526,7 @@ export default function Dashboard() {
             <input
               className="w-full border border-gray-200 rounded-md p-3 text-sm focus:ring-[#E4002B] focus:border-[#E4002B] transition-colors"
               value={newComment[task.id] || ''}
-              onChange={(e) => setNewComment(prev => ({ ...prev, [taskId]: e.target.value }))}
+              onChange={(e) => setNewComment(prev => ({ ...prev, [task.id]: e.target.value }))}
               placeholder="Write a comment..."
               disabled={uploadingImages[task.id]}
             />
@@ -541,7 +537,7 @@ export default function Dashboard() {
                     Selected Images ({selectedImages[task.id].length})
                   </span>
                   <button
-                    onClick={() => setSelectedImages(prev => ({ ...prev, [taskId]: null }))}
+                    onClick={() => setSelectedImages(prev => ({ ...prev, [task.id]: null }))}
                     className="text-xs text-red-600 hover:text-red-800"
                   >
                     Remove all
@@ -627,15 +623,14 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const ongoingTasks = allTasks.filter(task => task.status !== 'done')
   const completedTasks = allTasks.filter(task => task.status === 'done')
 
   return (
     <div className="min-h-screen flex font-sans relative">
-      {/* Hamburger Menu for Mobile */}
       <button
         className="md:hidden fixed top-6 left-6 z-50 p-2 bg-[#E4002B] text-white rounded-md"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -645,7 +640,6 @@ export default function Dashboard() {
         </svg>
       </button>
 
-            {/* Sidebar */}
       <aside
         className={`w-64 h-screen bg-[#E4002B] text-white p-6 fixed z-50 transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -653,7 +647,7 @@ export default function Dashboard() {
       >
         <div className="mb-8">
           <img
-            src="/logo.png" // Replace with your logo filename in /public
+            src="/logo.png"
             alt="Logo"
             className="w-20 h-auto mx-auto mb-6"
           />
@@ -685,7 +679,6 @@ export default function Dashboard() {
             >
               Instagram
             </a>
-            
             <a
               href="https://x.com/slidersagency"
               target="_blank"
@@ -695,7 +688,7 @@ export default function Dashboard() {
               Twitter
             </a>
             <a
-              href="https://sliders.agency/" // Replace with your WhatsApp number
+              href="https://sliders.agency/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-gray-200 transition-colors flex items-center gap-2"
@@ -711,13 +704,12 @@ export default function Dashboard() {
               }}
               className="w-full px-5 py-2 bg-white text-[#E4002B] rounded-md font-medium hover:bg-gray-200 hover:scale-105 transition-all duration-300"
             >
-               🔐Log Out
+              🔐 Log Out
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Overlay for mobile when sidebar is open */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -725,13 +717,10 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Main Content */}
       <div className="flex-1">
         <div className="min-h-screen bg-[#F7F9FC] text-[#1F2A44] px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-7xl mx-auto">
-            {/* Notification Bell and Clock Area */}
             <div className="fixed top-6 right-6 flex items-center gap-4 z-50">
-              {/* 3D Cartoon Time and Date Element */}
               <div className="relative w-48 h-12 perspective-1000">
                 <div className="absolute w-full h-full bg-[#E4002B] rounded-lg shadow-2xl transform rotate-x-10 text-center p-2 text-white font-semibold text-xs transition-all duration-300 hover:rotate-x-0 hover:translate-y-2 hover:shadow-3xl">
                   <img className='absolute w-[30px] left-[-14px] top-[-10px] animate-bounce' src='https://cdn3d.iconscout.com/3d/premium/thumb/alarm-clock-3d-icon-download-in-png-blend-fbx-gltf-file-formats--time-education-pack-school-icons-5191668.png' />
@@ -757,7 +746,6 @@ export default function Dashboard() {
               <div>
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-xl font-bold text-[#1F2A44]">All Tasks</h3>
-                  {/* Create Task button moved to sidebar */}
                 </div>
 
                 {showModal && (
@@ -778,7 +766,7 @@ export default function Dashboard() {
                             const assignedTo = e.target.assignedTo.value
                             const deadline = e.target.deadline.value
                             const driveLink = e.target.driveLink.value
-                            const docRef = addDoc(collection(db, 'tasks'), {
+                            addDoc(collection(db, 'tasks'), {
                               title,
                               description,
                               assignedTo,
