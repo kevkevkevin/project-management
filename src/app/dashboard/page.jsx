@@ -670,7 +670,7 @@ export default function Dashboard() {
           <p className="text-sm mb-4">Our Social Media ✌🏻:</p>
           <div className="flex flex-col gap-2">
             <a
-              href="https://www.linkedin.com"
+              href="https://www.linkedin.com/company/sliders-agency/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-gray-200 transition-colors flex items-center gap-2"
@@ -678,20 +678,29 @@ export default function Dashboard() {
               LinkedIn
             </a>
             <a
-              href="https://www.instagram.com"
+              href="https://www.instagram.com/slidersagency/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-gray-200 transition-colors flex items-center gap-2"
             >
               Instagram
             </a>
+            
             <a
-              href="https://wa.me/1234567890" // Replace with your WhatsApp number
+              href="https://x.com/slidersagency"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-gray-200 transition-colors flex items-center gap-2"
             >
-              WhatsApp
+              Twitter
+            </a>
+            <a
+              href="https://sliders.agency/" // Replace with your WhatsApp number
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-gray-200 transition-colors flex items-center gap-2"
+            >
+              Sliders.agency
             </a>
           </div>
           <div className="mt-20">
