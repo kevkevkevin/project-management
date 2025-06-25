@@ -20,13 +20,12 @@
 }
 
 body {
-  @apply bg-white text-black;
-  font-family: Arial, Helvetica, sans-serif;
-  height: 100vh;
-  background-image: url('../../public/bg.jpg');
+  background: url('../../public/slidersBG_.jpeg');
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  font-family: Arial, Helvetica, sans-serif;
+  height: 100vh;
 
 }
 
@@ -72,3 +71,11 @@ select:focus {
   animation: fade-in-down 0.3s ease-out;
 }
 
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce-slow {
+  animation: bounce 3s infinite ease-in-out;
+}
